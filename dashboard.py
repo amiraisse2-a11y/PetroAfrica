@@ -1,4 +1,4 @@
-# dashboard.py — PETROCI PRO v2.0
+# dashboard.py — PETRO AFRICA v2.0
 # Systeme complet de gestion de production petroliere CI
 
 import streamlit as st
@@ -13,7 +13,7 @@ import io
 # CONFIG PAGE
 # ════════════════════════════════════════════
 st.set_page_config(
-    page_title="PETROCI PRO — Production System",
+    page_title="PETRO AFRICA — Production System",
     page_icon="🛢️",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -58,9 +58,12 @@ st.markdown("""
 /* ── Mobile ── */
 @media (max-width: 768px) {
     [data-testid="stSidebar"] { width: 280px !important; }
-    .block-container { padding: 8px 12px !important; }
+    .block-container { padding: 8px 10px !important; }
     h1 { font-size: 1.2rem !important; }
     h2 { font-size: 1rem !important; }
+    /* Header toujours visible sur mobile */
+    .block-container > div:first-child { margin-top: 0 !important; }
+    [data-testid="stVerticalBlock"] > div:first-child { padding-top: 4px !important; }
 }
 
 /* ── Download ── */
@@ -107,7 +110,7 @@ from config import (PRIX_BARIL, TAUX, PROFILS_PUITS,
                      CHAMPS_PRODUCTION, BLOCS_EXPLORATION,
                      BENCHMARKS, SEUILS)
 
-DB_PATH = "petroci_pro.db"
+DB_PATH = "petro_africa.db"
 
 # ════════════════════════════════════════════
 # INITIALISATION
@@ -150,14 +153,19 @@ CFG_PLOTLY = {"displayModeBar": False}
 
 def header(titre, sous=""):
     st.markdown(f"""
-    <div style="background:linear-gradient(135deg,#E07B00,#F0A500);
-                border-radius:10px;padding:18px 24px;
-                margin-bottom:20px;
-                box-shadow:0 4px 15px rgba(224,123,0,0.2);">
-        <div style="color:white;font-size:1.4rem;font-weight:800;
-                    letter-spacing:0.3px;">{titre}</div>
-        <div style="color:rgba(255,255,255,0.85);font-size:0.78rem;
-                    margin-top:3px;">{sous}</div>
+    <div style="background:linear-gradient(135deg,#C96A00,#E07B00,#F0A500);
+                border-radius:14px;padding:22px 28px 18px 28px;
+                margin-bottom:24px;margin-top:4px;
+                box-shadow:0 6px 24px rgba(224,123,0,0.35);
+                border-left:6px solid rgba(255,255,255,0.4);
+                position:relative;overflow:hidden;">
+        <div style="position:absolute;top:-18px;right:-18px;
+                    font-size:5rem;opacity:0.08;line-height:1;">🛢️</div>
+        <div style="color:#FFFFFF;font-size:1.55rem;font-weight:900;
+                    letter-spacing:0.5px;text-shadow:0 2px 8px rgba(0,0,0,0.2);
+                    line-height:1.2;">{titre}</div>
+        <div style="color:rgba(255,255,255,0.92);font-size:0.82rem;
+                    margin-top:5px;font-weight:500;letter-spacing:0.3px;">{sous}</div>
     </div>""", unsafe_allow_html=True)
 
 def kpi(label, valeur, sous="", couleur="#E07B00", icone=""):
@@ -197,7 +205,7 @@ st.sidebar.markdown(f"""
 <div style="text-align:center;padding:16px 0 10px 0;">
     <div style="font-size:2.5rem;">🛢️</div>
     <div style="color:#E07B00;font-size:1.2rem;font-weight:800;
-                letter-spacing:3px;margin:6px 0 2px 0;">PETROCI PRO</div>
+                letter-spacing:3px;margin:6px 0 2px 0;">PETRO AFRICA</div>
     <div style="color:#AAA;font-size:0.65rem;letter-spacing:2px;">
         PRODUCTION SYSTEM v2.0</div>
 </div>
@@ -277,7 +285,7 @@ if st.sidebar.button("Deconnexion", use_container_width=True):
 
 st.sidebar.markdown(
     '<div style="text-align:center;color:#CCC;font-size:0.62rem;'
-    'margin-top:30px;">PETROCI PRO © 2026</div>',
+    'margin-top:30px;">PETRO AFRICA © 2026</div>',
     unsafe_allow_html=True
 )
 
@@ -309,6 +317,24 @@ if page == "Tableau de Bord":
         with c6: kpi("Uptime",
                       f"{kpis.get('uptime_moyen',0):.1f}%",
                       "cible 95%", "#8E44AD", "📊")
+
+        # ── Ligne 2 KPIs : Gaz + Water Cut moyen ──────────────
+        df_today = historique_champs(1)
+        if not df_today.empty:
+            gaz_jour = df_today["production_gaz_mmscf"].sum()
+            eau_jour = df_today["production_eau_bbl"].sum()
+            wc_moy   = df_today["water_cut"].mean() * 100
+            rev_fcfa_total = kpis.get("revenu_journalier_xof", 0) * 30
+
+            k1,k2,k3,k4 = st.columns(4)
+            with k1: kpi("Gaz", f"{gaz_jour:.1f}", "MMscf/jour", "#27AE60", "⛽")
+            with k2: kpi("Water Cut moy.", f"{wc_moy:.1f}%",
+                          "seuil critique 70%",
+                          "#E74C3C" if wc_moy > 70 else "#2E86C1", "💧")
+            with k3: kpi("Eau produite", f"{eau_jour:,.0f}",
+                          "bbl/jour", "#5DADE2", "🌊")
+            with k4: kpi("Rev. mensuel", f"{rev_fcfa_total/1e9:.2f} Mds",
+                          "FCFA/mois estimé", "#8E44AD", "📈")
 
     st.markdown("<br>", unsafe_allow_html=True)
 
@@ -354,6 +380,54 @@ if page == "Tableau de Bord":
                 hovermode="x unified", **LAYOUT
             )
             st.plotly_chart(fig2, use_container_width=True,
+                            config=CFG_PLOTLY)
+
+        # ── Ligne 2 : Gaz + Water Cut ──────────────────────────
+        cg2, cd2 = st.columns(2)
+        with cg2:
+            df_gaz = (df_hist.groupby("date")["production_gaz_mmscf"]
+                      .sum().reset_index())
+            fig_gaz = go.Figure(go.Scatter(
+                x=df_gaz["date"], y=df_gaz["production_gaz_mmscf"],
+                fill="tozeroy",
+                fillcolor="rgba(39,174,96,0.12)",
+                line=dict(color="#27AE60", width=2.5),
+                name="Gaz CI"
+            ))
+            fig_gaz.update_layout(
+                title="Production Gaz Totale CI",
+                xaxis=dict(gridcolor="#EEE", color="#888"),
+                yaxis=dict(gridcolor="#EEE", color="#888",
+                           title="MMscf/jour"),
+                hovermode="x unified", **LAYOUT
+            )
+            st.plotly_chart(fig_gaz, use_container_width=True,
+                            config=CFG_PLOTLY)
+
+        with cd2:
+            fig_wc = go.Figure()
+            for ch in df_hist["champ"].unique():
+                df_c = df_hist[df_hist["champ"] == ch]
+                df_wc = df_c.groupby("date")["water_cut"].mean().reset_index()
+                fig_wc.add_trace(go.Scatter(
+                    x=df_wc["date"],
+                    y=df_wc["water_cut"] * 100,
+                    name=ch, mode="lines",
+                    line=dict(color=COLORS.get(ch, "#666"), width=2)
+                ))
+            fig_wc.add_hline(y=70, line_dash="dash",
+                             line_color="#E74C3C",
+                             annotation_text="Seuil critique 70%")
+            fig_wc.update_layout(
+                title="Water Cut par Champ (%)",
+                xaxis=dict(gridcolor="#EEE", color="#888"),
+                yaxis=dict(gridcolor="#EEE", color="#888",
+                           title="%", range=[0, 100]),
+                legend=dict(bgcolor="white",
+                            bordercolor="rgba(224,123,0,0.3)"),
+                hovermode="x unified", **LAYOUT
+            )
+            st.plotly_chart(fig_wc, use_container_width=True,
                             config=CFG_PLOTLY)
 
     # Carte offshore CI
@@ -781,7 +855,7 @@ elif page == "Saisie des Donnees":
         st.download_button(
             "Telecharger le modele CSV",
             data=modele.to_csv(index=False).encode("utf-8"),
-            file_name="modele_petroci_pro.csv",
+            file_name="modele_petro_africa.csv",
             mime="text/csv"
         )
         st.divider()
@@ -1230,9 +1304,9 @@ elif page == "Benchmarks":
             ["Water Cut moyen CI",
              f"{BENCHMARKS['water_cut_moyen_ci']:.0%}", "Industrie CI"],
             ["Seuil alerte water cut",
-             f"{BENCHMARKS['water_cut_alerte']:.0%}", "PETROCI"],
+             f"{BENCHMARKS['water_cut_alerte']:.0%}", "PETRO AFRICA"],
             ["Seuil critique water cut",
-             f"{BENCHMARKS['water_cut_critique']:.0%}", "PETROCI"],
+             f"{BENCHMARKS['water_cut_critique']:.0%}", "PETRO AFRICA"],
             ["Declin annuel normal offshore",
              f"{BENCHMARKS['declin_annuel_normal']:.0%}", "SPE"],
             ["Declin annuel rapide",
@@ -1244,7 +1318,7 @@ elif page == "Benchmarks":
             ["GOR normal max",
              f"{BENCHMARKS['gor_normal_max']} scf/stb", "Industrie CI"],
             ["Production min economique",
-             f"{BENCHMARKS['production_min_viable']:,} bbl/j", "PETROCI"],
+             f"{BENCHMARKS['production_min_viable']:,} bbl/j", "PETRO AFRICA"],
             ["Cout production offshore CI",
              f"${BENCHMARKS['cout_prod_offshore_ci']}/bbl", "IHS Markit"],
         ]
@@ -1435,10 +1509,10 @@ elif page == "Rapports":
 
                 elif type_r == "Rapport Alertes Actives":
                     df_al = lire_alertes(resolues=False)
-                    (st.dataframe(df_al, use_container_width=True,
-                                  hide_index=True)
-                     if not df_al.empty
-                     else st.success("Aucune alerte active."))
+                    if not df_al.empty:
+                        st.dataframe(df_al, use_container_width=True, hide_index=True)
+                    else:
+                        st.success("Aucune alerte active.")
 
                 elif type_r == "Rapport Financier":
                     aff = rapport[["champ","Production_Totale",
