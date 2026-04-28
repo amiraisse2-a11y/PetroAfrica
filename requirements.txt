@@ -1,0 +1,13 @@
+streamlit
+pandas
+plotly
+numpy
+supabase
+python-dotenv
+scipy
+scikit-learn
+openpyxl
+reportlab
+prophet
+sendgrid
+bcrypt
