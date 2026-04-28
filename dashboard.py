@@ -1354,8 +1354,10 @@ elif page == "Alertes":
                      use_container_width=True):
             rapport = production_par_champ(7)
             ok, msg = envoyer_rapport_quotidien(kpis, rapport)
-            (st.success(f"Rapport envoye : {msg}")
-             if ok else st.warning(f"Email non configure : {msg}"))
+            if ok:
+                st.success(f"Rapport envoye : {msg}")
+            else:
+                st.warning(f"Email non configure : {msg}")
 
     with col_btn3:
         if st.button("Marquer tout comme resolu",
