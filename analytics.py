@@ -106,8 +106,15 @@ def historique_champs(periode_jours=90):
     )
     if df.empty:
         return pd.DataFrame()
-    return (df.groupby(["date","champ"])["production_huile_bbl"]
-            .sum().reset_index().sort_values("date"))
+    return (df.groupby(["date","champ"])
+              .agg(
+                  production_huile_bbl=("production_huile_bbl","sum"),
+                  production_gaz_mmscf=("production_gaz_mmscf","sum"),
+                  production_eau_bbl  =("production_eau_bbl","sum"),
+                  water_cut           =("water_cut","mean"),
+              )
+              .reset_index()
+              .sort_values("date"))
 
 def analyse_benchmark(df_prod):
     """Compare les performances aux benchmarks industrie CI"""
