@@ -74,8 +74,10 @@ def generer_donnees_realistes(nb_jours=730):
             prod_gaz  = prod * gor / 1000
 
             # Pression décline
+            # p["pression_tete"] = pression de tête initiale (clé config.py)
+            pression_init = p.get("pression_tete", p.get("pression_base", 1000))
             pression  = max(
-                p["pression_base"] * facteur * np.random.uniform(0.97, 1.03),
+                pression_init * facteur * np.random.uniform(0.97, 1.03),
                 100
             )
 
