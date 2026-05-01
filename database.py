@@ -94,6 +94,69 @@ def initialiser_sqlite():
             email TEXT, action TEXT, details TEXT
         )""")
 
+    # ── Nouvelles tables modules Réservoir / ESG / Finances ──────────────
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS mesures_reservoir_gaz (
+            id              INTEGER PRIMARY KEY AUTOINCREMENT,
+            champ           TEXT NOT NULL,
+            date_mesure     TEXT NOT NULL,
+            pression_psia   REAL NOT NULL,
+            gp_mmscf        REAL NOT NULL,
+            z_mesure        REAL,
+            source          TEXT DEFAULT 'DST',
+            notes           TEXT,
+            created_at      TEXT DEFAULT (datetime('now'))
+        )""")
+
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS tests_puits (
+            id              INTEGER PRIMARY KEY AUTOINCREMENT,
+            puit_id         TEXT NOT NULL,
+            champ           TEXT NOT NULL,
+            date_test       TEXT NOT NULL,
+            type_test       TEXT DEFAULT 'Build-up',
+            pr_psia         REAL NOT NULL,
+            pwf_test_psia   REAL NOT NULL,
+            q_test_bopd     REAL NOT NULL,
+            wh_pressure     REAL,
+            profondeur_ft   REAL,
+            notes           TEXT,
+            created_at      TEXT DEFAULT (datetime('now'))
+        )""")
+
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS journal_flaring (
+            id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+            champ               TEXT NOT NULL,
+            mois                TEXT NOT NULL,
+            prod_gaz_mmscfd     REAL NOT NULL,
+            gaz_torche_mmscfd   REAL NOT NULL,
+            flaring_pct         REAL,
+            co2e_tonnes         REAL,
+            cause_flaring       TEXT,
+            conformite_petroci  INTEGER,
+            valide_par          TEXT,
+            created_at          TEXT DEFAULT (datetime('now')),
+            UNIQUE(champ, mois)
+        )""")
+
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS scenarios_financiers (
+            id              INTEGER PRIMARY KEY AUTOINCREMENT,
+            nom_scenario    TEXT NOT NULL,
+            champ           TEXT NOT NULL,
+            prix_baril      REAL,
+            prix_gaz_mmbtu  REAL,
+            capex_musd      REAL,
+            opex_boe        REAL,
+            npv_musd        REAL,
+            irr_pct         REAL,
+            payback_ans     REAL,
+            wacc_pct        REAL,
+            cree_par        TEXT,
+            created_at      TEXT DEFAULT (datetime('now'))
+        )""")
+
     conn.commit()
     conn.close()
 
@@ -286,4 +349,106 @@ def sauvegarder_production(date_s, puits, champ,
         return True
     except Exception as e:
         st.error(f"Erreur sauvegarde : {e}")
+        return False
+
+# ─────────────────────────────────────────
+# RÉSERVOIR — MESURES P/z (champs gaz)
+# ─────────────────────────────────────────
+def get_mesures_reservoir(champ: str) -> pd.DataFrame:
+    try:
+        if utiliser_supabase():
+            sb   = get_supabase()
+            data = (sb.table("mesures_reservoir_gaz")
+                      .select("*")
+                      .eq("champ", champ)
+                      .order("date_mesure")
+                      .execute().data)
+            return pd.DataFrame(data) if data else pd.DataFrame()
+        else:
+            conn = sqlite3.connect(DB_PATH, check_same_thread=False)
+            df   = pd.read_sql_query(
+                "SELECT * FROM mesures_reservoir_gaz "
+                "WHERE champ=? ORDER BY date_mesure",
+                conn, params=(champ,))
+            conn.close()
+            return df
+    except Exception as e:
+        st.error(f"Erreur lecture réservoir gaz : {e}")
+        return pd.DataFrame()
+
+# ─────────────────────────────────────────
+# RÉSERVOIR — TESTS DE PUITS (IPR Vogel)
+# ─────────────────────────────────────────
+def get_tests_puits(champ: str) -> pd.DataFrame:
+    try:
+        if utiliser_supabase():
+            sb   = get_supabase()
+            data = (sb.table("tests_puits")
+                      .select("*")
+                      .eq("champ", champ)
+                      .order("date_test", desc=True)
+                      .execute().data)
+            return pd.DataFrame(data) if data else pd.DataFrame()
+        else:
+            conn = sqlite3.connect(DB_PATH, check_same_thread=False)
+            df   = pd.read_sql_query(
+                "SELECT * FROM tests_puits "
+                "WHERE champ=? ORDER BY date_test DESC",
+                conn, params=(champ,))
+            conn.close()
+            return df
+    except Exception as e:
+        st.error(f"Erreur lecture tests puits : {e}")
+        return pd.DataFrame()
+
+# ─────────────────────────────────────────
+# ESG — HISTORIQUE FLARING
+# ─────────────────────────────────────────
+def get_flaring_historique(champ: str, mois_debut: str = None) -> pd.DataFrame:
+    try:
+        if utiliser_supabase():
+            sb = get_supabase()
+            q  = (sb.table("journal_flaring")
+                    .select("*")
+                    .eq("champ", champ)
+                    .order("mois", desc=True))
+            if mois_debut:
+                q = q.gte("mois", mois_debut)
+            data = q.execute().data
+            return pd.DataFrame(data) if data else pd.DataFrame()
+        else:
+            conn = sqlite3.connect(DB_PATH, check_same_thread=False)
+            sql  = ("SELECT * FROM journal_flaring "
+                    "WHERE champ=?")
+            params = [champ]
+            if mois_debut:
+                sql    += " AND mois>=?"
+                params.append(mois_debut)
+            sql += " ORDER BY mois DESC"
+            df   = pd.read_sql_query(sql, conn, params=params)
+            conn.close()
+            return df
+    except Exception as e:
+        st.error(f"Erreur lecture flaring : {e}")
+        return pd.DataFrame()
+
+# ─────────────────────────────────────────
+# FINANCES — SAUVEGARDER SCÉNARIO NPV
+# ─────────────────────────────────────────
+def sauvegarder_scenario(scenario: dict) -> bool:
+    try:
+        if utiliser_supabase():
+            get_supabase().table("scenarios_financiers").upsert(scenario).execute()
+        else:
+            conn = sqlite3.connect(DB_PATH, check_same_thread=False)
+            cols = ", ".join(scenario.keys())
+            plh  = ", ".join(["?"] * len(scenario))
+            conn.cursor().execute(
+                f"INSERT OR REPLACE INTO scenarios_financiers ({cols}) VALUES ({plh})",
+                list(scenario.values()))
+            conn.commit()
+            conn.close()
+        return True
+    except Exception as e:
+        st.error(f"Erreur sauvegarde scénario : {e}")
         return False
