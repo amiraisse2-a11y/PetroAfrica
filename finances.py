@@ -10,6 +10,9 @@ import numpy as np
 import plotly.graph_objects as go
 import plotly.express as px
 from plotly.subplots import make_subplots
+from config import (PRIX_BARIL, PRIX_GAZ_MMBTU, TAUX,
+                    WACC_DEFAULT, WACC_LOW_RISK, WACC_HIGH_RISK,
+                    ROYALTIES_HUILE_PCT, IMPOT_SOCIETES_PCT)
 
 # ─── Palette PETRO AFRICA ───────────────────────────────────────────────────
 COLORS = {
