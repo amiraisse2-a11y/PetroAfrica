@@ -234,7 +234,7 @@ PAGES = [
     "Rapports",
 ]
 
-page = st.sidebar.radio("", PAGES, label_visibility="collapsed")
+page = st.sidebar.radio("Navigation", PAGES, label_visibility="collapsed")
 
 st.sidebar.markdown(
     '<hr style="border-color:rgba(224,123,0,0.2);margin:8px 0;">',
@@ -1271,7 +1271,7 @@ elif page == "Benchmarks":
             name="Water Cut actuel (%)",
             marker=dict(
                 color=[("#27AE60" if v < wc_bench
-                        else "#F0A500" if v < BENCHMARKS["water_cut_alerte"]
+                        else "#F0A500" if v < SEUILS["water_cut_alerte"]
                         else "#E74C3C")
                        for v in wc_par_puits["water_cut"]]
             )
@@ -1279,10 +1279,10 @@ elif page == "Benchmarks":
         fig.add_hline(y=wc_bench*100, line_dash="dash",
                        line_color="#2E86C1",
                        annotation_text=f"Benchmark CI ({wc_bench:.0%})")
-        fig.add_hline(y=BENCHMARKS["water_cut_alerte"]*100,
+        fig.add_hline(y=SEUILS["water_cut_alerte"]*100,
                        line_dash="dot", line_color="#F0A500",
                        annotation_text="Seuil alerte")
-        fig.add_hline(y=BENCHMARKS["water_cut_critique"]*100,
+        fig.add_hline(y=SEUILS["water_cut_critique"]*100,
                        line_dash="dot", line_color="#E74C3C",
                        annotation_text="Seuil critique")
         fig.update_layout(
