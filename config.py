@@ -68,6 +68,103 @@ WACC_DEFAULT    = 12.0   # % (risque pays CI inclus)
 WACC_LOW_RISK   = 10.0   # % (opérateur majeur, financement BEI/IFC)
 WACC_HIGH_RISK  = 18.0   # % (exploration early-stage)
 
+# ─── PROFILS PUITS ───────────────────────────────────────────────────────────
+# Utilisé par database.py → peupler_puits()
+# Clés requises : champ, prod_base, wc_base, lat, lon
+# Clés optionnelles : type, profondeur_m, gor_base, pression_tete
+PROFILS_PUITS = {
+    # ── Baleine (ENI / PETROCI — huile, depuis 2023) ──────────────────────
+    "Baleine-A": {
+        "champ": "Baleine", "type": "Producteur",
+        "prod_base": 15000, "wc_base": 0.05,
+        "gor_base": 420, "pression_tete": 1800,
+        "lat": 4.42, "lon": -4.55, "profondeur_m": 1900,
+    },
+    "Baleine-B": {
+        "champ": "Baleine", "type": "Producteur",
+        "prod_base": 12000, "wc_base": 0.08,
+        "gor_base": 450, "pression_tete": 1750,
+        "lat": 4.40, "lon": -4.57, "profondeur_m": 2050,
+    },
+    "Baleine-C": {
+        "champ": "Baleine", "type": "Producteur",
+        "prod_base": 9500, "wc_base": 0.12,
+        "gor_base": 480, "pression_tete": 1700,
+        "lat": 4.38, "lon": -4.53, "profondeur_m": 2100,
+    },
+    # ── Sankofa (TotalEnergies / PETROCI — gaz + condensat) ───────────────
+    "Sankofa-1": {
+        "champ": "Sankofa", "type": "Gazier",
+        "prod_base": 3200, "wc_base": 0.02,
+        "gor_base": 8500, "pression_tete": 2200,
+        "lat": 4.85, "lon": -4.20, "profondeur_m": 3100,
+    },
+    "Sankofa-2": {
+        "champ": "Sankofa", "type": "Gazier",
+        "prod_base": 2800, "wc_base": 0.03,
+        "gor_base": 8200, "pression_tete": 2150,
+        "lat": 4.87, "lon": -4.22, "profondeur_m": 3050,
+    },
+    "Sankofa-3": {
+        "champ": "Sankofa", "type": "Gazier",
+        "prod_base": 2500, "wc_base": 0.04,
+        "gor_base": 7900, "pression_tete": 2100,
+        "lat": 4.83, "lon": -4.18, "profondeur_m": 3200,
+    },
+    "Sankofa-GAS": {
+        "champ": "Sankofa", "type": "Gazier",
+        "prod_base": 1800, "wc_base": 0.01,
+        "gor_base": 12000, "pression_tete": 2300,
+        "lat": 4.89, "lon": -4.25, "profondeur_m": 3400,
+    },
+    # ── Foxtrot (TotalEnergies / PETROCI — gaz, depuis 1999) ──────────────
+    "Foxtrot-1": {
+        "champ": "Foxtrot", "type": "Gazier",
+        "prod_base": 1500, "wc_base": 0.15,
+        "gor_base": 15000, "pression_tete": 1200,
+        "lat": 4.10, "lon": -4.80, "profondeur_m": 2800,
+    },
+    "Foxtrot-2": {
+        "champ": "Foxtrot", "type": "Gazier",
+        "prod_base": 1200, "wc_base": 0.18,
+        "gor_base": 14500, "pression_tete": 1150,
+        "lat": 4.12, "lon": -4.82, "profondeur_m": 2750,
+    },
+    # ── Baobab (CNR International / PETROCI — huile) ──────────────────────
+    "Baobab-1": {
+        "champ": "Baobab", "type": "Producteur",
+        "prod_base": 4200, "wc_base": 0.45,
+        "gor_base": 620, "pression_tete": 950,
+        "lat": 4.65, "lon": -4.35, "profondeur_m": 1650,
+    },
+    "Baobab-2": {
+        "champ": "Baobab", "type": "Producteur",
+        "prod_base": 3800, "wc_base": 0.52,
+        "gor_base": 590, "pression_tete": 900,
+        "lat": 4.63, "lon": -4.37, "profondeur_m": 1700,
+    },
+    "Baobab-3W": {
+        "champ": "Baobab", "type": "Injecteur",
+        "prod_base": 0, "wc_base": 1.0,
+        "gor_base": 0, "pression_tete": 2800,
+        "lat": 4.67, "lon": -4.33, "profondeur_m": 1600,
+    },
+    # ── Lion (TotalEnergies / PETROCI — huile légère) ─────────────────────
+    "Lion-1": {
+        "champ": "Lion", "type": "Producteur",
+        "prod_base": 2100, "wc_base": 0.62,
+        "gor_base": 750, "pression_tete": 700,
+        "lat": 4.30, "lon": -4.10, "profondeur_m": 1450,
+    },
+    # ── Panthère (TotalEnergies / PETROCI — huile) ────────────────────────
+    "Panthere-1": {
+        "champ": "Panthere", "type": "Producteur",
+        "prod_base": 1800, "wc_base": 0.71,
+        "gor_base": 820, "pression_tete": 620,
+        "lat": 4.25, "lon": -4.05, "profondeur_m": 1380,
+    },
+}
+
 # ─── CHAMPS RÉFÉRENCE CÔTE D'IVOIRE ─────────────────────────────────────────
 CHAMPS = {
     "Baleine":  {"type": "huile",    "operateur": "ENI/PETROCI", "debut": 2023},
