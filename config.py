@@ -63,6 +63,21 @@ FLARING_FRACTION_DEFAULT   = 0.05   # 5% de la production gaz torchée (benchmar
 # Réglementation PETROCI : objectif zéro torchage systématique d'ici 2030
 PETROCI_FLARING_TARGET_PCT = 2.0   # % cible max flaring 2030
 
+# ─── TAUX DE CHANGE ─────────────────────────────────────────────────────────
+# Utilisé dans analytics.py : rev_xof = rev_usd * TAUX
+TAUX = 610.0    # 1 USD = 610 XOF/FCFA (taux BCEAO moyen 2024)
+
+# ─── BENCHMARKS INDUSTRIE — CÔTE D'IVOIRE OFFSHORE ──────────────────────────
+# Utilisé dans analytics.py : kpis_journaliers, calculer_declin, analyse_benchmark
+BENCHMARKS = {
+    "cout_prod_offshore_ci":   12.0,   # USD/bbl — coût opex offshore CI
+    "declin_annuel_normal":     0.10,   # 10 %/an — déclin normal
+    "declin_annuel_rapide":     0.20,   # 20 %/an — seuil déclin accéléré
+    "water_cut_moyen_ci":       0.35,   # 35 % — water cut moyen parc CI
+    "uptime_cible":             0.95,   # 95 % — objectif disponibilité puits
+    "production_min_viable":  500.0,   # BOPD — seuil rentabilité minimal
+}
+
 # ─── WACC / FINANCE ──────────────────────────────────────────────────────────
 WACC_DEFAULT    = 12.0   # % (risque pays CI inclus)
 WACC_LOW_RISK   = 10.0   # % (opérateur majeur, financement BEI/IFC)
