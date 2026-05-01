@@ -1,280 +1,91 @@
-# config.py — PETROCI PRO
-# Données réelles des champs pétroliers de Côte d'Ivoire
+"""
+PETRO AFRICA — Configuration Centrale
+Mise à jour : ajout PRIX_GAZ_MMSCFD + constantes gaz Afrique de l'Ouest
+"""
 
-PRIX_BARIL    = 78.5   # USD/bbl (Brent avril 2026)
-TAUX_USD_XOF  = 615    # 1 USD = 615 FCFA
-TAUX_EUR_XOF  = 655    # 1 EUR = 655 FCFA
+import os
+from dotenv import load_dotenv
 
-# ─────────────────────────────────────────────────────
-# CHAMPS EN PRODUCTION — données proches réalité 2024-2026
-# Sources : rapports PETROCI, ENI, TotalEnergies publics
-# ─────────────────────────────────────────────────────
-CHAMPS_PRODUCTION = {
-    "Baleine": {
-        "operateur":        "ENI / PETROCI",
-        "type":             "Offshore deepwater",
-        "statut":           "Production",
-        "profondeur_eau_m": 1200,
-        "date_debut":       "2023-01-01",
-        "bloc":             "CI-101",
-        "lat_centre":       4.852,
-        "lon_centre":       -3.987,
-        "production_peak_bbl": 17000,
-        "reserves_MMbbl":   2500,
-        "description":      "Plus grande découverte CI - 2021. ENI opérateur."
-    },
-    "Sankofa": {
-        "operateur":        "TotalEnergies / ENI / PETROCI",
-        "type":             "Offshore",
-        "statut":           "Production",
-        "profondeur_eau_m": 1500,
-        "date_debut":       "2017-05-01",
-        "bloc":             "CI-202",
-        "lat_centre":       4.120,
-        "lon_centre":       -3.456,
-        "production_peak_bbl": 35000,
-        "reserves_MMbbl":   246,
-        "description":      "Sankofa-Gohene. Gaz et condensats + huile."
-    },
-    "Foxtrot": {
-        "operateur":        "TotalEnergies / PETROCI",
-        "type":             "Offshore",
-        "statut":           "Declin avance",
-        "profondeur_eau_m": 600,
-        "date_debut":       "1999-01-01",
-        "bloc":             "CI-27",
-        "lat_centre":       3.890,
-        "lon_centre":       -3.234,
-        "production_peak_bbl": 12000,
-        "reserves_MMbbl":   39,
-        "description":      "Champ mature. Production en declin accelere."
-    },
-    "Baobab": {
-        "operateur":        "CNR International / PETROCI",
-        "type":             "Offshore",
-        "statut":           "Declin",
-        "profondeur_eau_m": 1000,
-        "date_debut":       "2005-06-01",
-        "bloc":             "CI-40",
-        "lat_centre":       4.350,
-        "lon_centre":       -3.678,
-        "production_peak_bbl": 45000,
-        "reserves_MMbbl":   200,
-        "description":      "Champ mature. Récupération assistée en cours."
-    },
-    "Lion": {
-        "operateur":        "TotalEnergies / PETROCI",
-        "type":             "Offshore",
-        "statut":           "Declin avance",
-        "profondeur_eau_m": 450,
-        "date_debut":       "1994-01-01",
-        "bloc":             "CI-11",
-        "lat_centre":       4.050,
-        "lon_centre":       -3.350,
-        "production_peak_bbl": 8000,
-        "reserves_MMbbl":   20,
-        "description":      "Champ historique. En fin de vie economique."
-    },
-    "Panthere": {
-        "operateur":        "TotalEnergies / PETROCI",
-        "type":             "Offshore",
-        "statut":           "Declin avance",
-        "profondeur_eau_m": 500,
-        "date_debut":       "1995-01-01",
-        "bloc":             "CI-11",
-        "lat_centre":       4.070,
-        "lon_centre":       -3.370,
-        "production_peak_bbl": 5000,
-        "reserves_MMbbl":   15,
-        "description":      "Satellite du champ Lion."
-    },
+load_dotenv()
+
+# ─── Supabase ────────────────────────────────────────────────────────────────
+SUPABASE_URL = os.getenv("SUPABASE_URL", "")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY", "")
+
+# ─── Application ─────────────────────────────────────────────────────────────
+APP_NAME    = "PETRO AFRICA"
+APP_VERSION = "2.1.0"
+APP_LOGO    = "🛢️"
+
+# ─── Unités par défaut ───────────────────────────────────────────────────────
+UNITE_DEBIT    = "BOPD"    # Barils par jour
+UNITE_GPI      = "MMscfd"  # Millions de pieds cubes par jour
+UNITE_PRESSION = "psi"
+UNITE_TEMP     = "°C"
+
+# ─── PRIX & RÉFÉRENCES MARCHÉ ────────────────────────────────────────────────
+
+# Huile — référence Brent/Dated
+PRIX_BARIL = 75.0          # USD/bbl  (Brent spot, mise à jour manuelle recommandée)
+
+# Gaz — référence Afrique de l'Ouest
+# Sources : NLNG (Nigeria), GTA (Sénégal/Mauritanie), Foxtrot/Sankofa (CI)
+# Fourchette typique : 3.5–6.0 USD/MMBtu selon contrat et destination
+PRIX_GAZ_MMBTU    = 4.5    # USD/MMBtu  ← NOUVEAU — tarif moyen contrats AOG
+PRIX_GAZ_MMSCFD   = 4.5    # Alias explicite pour la facturation par MMscfd/j
+                             # (1 MMscfd ≈ 1 000 MMBtu/j en conditions standard)
+
+# Conversion énergétique gaz → BOE
+# 1 BOE ≈ 5.8 MMBtu  (API/SPE standard)
+GAZ_MMBTU_PAR_BOE = 5.8
+
+# Condensat (si champ gaz à condensat)
+PRIX_CONDENSAT = 72.0       # USD/bbl  (rabais ~3–5 $/bbl vs Brent)
+
+# ─── PARAMÈTRES FISCAUX CÔTE D'IVOIRE (Code Pétrolier 1996, amendé 2012) ───
+ROYALTIES_HUILE_PCT = 12.5  # % sur revenus bruts huile
+ROYALTIES_GAZ_PCT   = 8.0   # % sur revenus bruts gaz
+IMPOT_SOCIETES_PCT  = 30.0  # % (taux standard Côte d'Ivoire)
+PROFIT_OIL_SPLIT    = 0.60  # Part état sur profit oil (contrat de partage type)
+
+# ─── PARAMÈTRES PRODUCTION ───────────────────────────────────────────────────
+DECLINE_RATE_DEFAULT = 10.0   # % annuel (déclin exponentiel)
+WATER_CUT_DEFAULT    = 0.20   # fraction (20%)
+GOR_DEFAULT          = 500.0  # scf/bbl (Gas-Oil Ratio)
+
+# ─── ESG / FLARING ───────────────────────────────────────────────────────────
+# Facteurs d'émission IPCC/GIE
+CO2_PAR_TONNE_GAZ_TORCHE  = 2.75   # tCO2/t gaz brûlé
+GAZ_DENSITÉ_KG_M3          = 0.75   # kg/m³ (gaz naturel moyen)
+METHANE_GWP100             = 28.0   # Global Warming Potential CH4 (GIEC AR6)
+FLARING_FRACTION_DEFAULT   = 0.05   # 5% de la production gaz torchée (benchmark CI)
+
+# Réglementation PETROCI : objectif zéro torchage systématique d'ici 2030
+PETROCI_FLARING_TARGET_PCT = 2.0   # % cible max flaring 2030
+
+# ─── WACC / FINANCE ──────────────────────────────────────────────────────────
+WACC_DEFAULT    = 12.0   # % (risque pays CI inclus)
+WACC_LOW_RISK   = 10.0   # % (opérateur majeur, financement BEI/IFC)
+WACC_HIGH_RISK  = 18.0   # % (exploration early-stage)
+
+# ─── CHAMPS RÉFÉRENCE CÔTE D'IVOIRE ─────────────────────────────────────────
+CHAMPS = {
+    "Baleine":  {"type": "huile",    "operateur": "ENI/PETROCI", "debut": 2023},
+    "Sankofa":  {"type": "gaz",      "operateur": "ENI/PETROCI", "debut": 2017},
+    "Foxtrot":  {"type": "gaz",      "operateur": "FOXTROT Int.","debut": 1999},
+    "Espoir":   {"type": "huile/gaz","operateur": "CNR Int.",    "debut": 2002},
+    "Baobab":   {"type": "huile",    "operateur": "CNR Int.",    "debut": 2005},
 }
 
-# ─────────────────────────────────────────────────────
-# BLOCS EN EXPLORATION / APPRAISAL
-# ─────────────────────────────────────────────────────
-BLOCS_EXPLORATION = {
-    "CI-101 Deep": {
-        "operateur":    "ENI / PETROCI",
-        "statut":       "Appraisal",
-        "phase":        "Evaluation",
-        "lat":          4.900,
-        "lon":          -4.100,
-        "potentiel":    "1.5+ Milliards bbl",
-        "description":  "Extension profonde du Baleine. Très prometteur."
-    },
-    "CI-205": {
-        "operateur":    "ENI / PETROCI",
-        "statut":       "Exploration",
-        "phase":        "Sismique 3D",
-        "lat":          4.650,
-        "lon":          -4.350,
-        "potentiel":    "TBD",
-        "description":  "Bloc adjacent au Baleine. Sismique en cours."
-    },
-    "CI-401": {
-        "operateur":    "TotalEnergies / PETROCI",
-        "statut":       "Exploration",
-        "phase":        "Forage exploratoire",
-        "lat":          3.800,
-        "lon":          -4.200,
-        "potentiel":    "500+ MMbbl",
-        "description":  "Forages exploratoires planifiés 2025-2026."
-    },
-    "CI-602": {
-        "operateur":    "PETROCI",
-        "statut":       "Exploration",
-        "phase":        "Sismique 2D",
-        "lat":          3.500,
-        "lon":          -3.800,
-        "potentiel":    "TBD",
-        "description":  "Bloc opéré par PETROCI. Données sismiques en cours."
-    },
-    "CI-706": {
-        "operateur":    "Vittol / PETROCI",
-        "statut":       "Exploration",
-        "phase":        "Etude technique",
-        "lat":          5.100,
-        "lon":          -3.500,
-        "potentiel":    "TBD",
-        "description":  "Nouveau bloc attribué. Etudes préliminaires."
-    },
-    "CI-803": {
-        "operateur":    "PETROCI / Partenaires TBD",
-        "statut":       "Exploration",
-        "phase":        "Licencement",
-        "lat":          5.300,
-        "lon":          -3.200,
-        "potentiel":    "TBD",
-        "description":  "Nouveau bloc frontier. Appel d'offres en cours."
-    },
-}
+# ─── ALERTES & SEUILS ────────────────────────────────────────────────────────
+SEUIL_ALERTE_WATERCUT   = 0.80   # 80% — seuil critique
+SEUIL_ALERTE_GOR        = 2000   # scf/bbl — gas coning potentiel
+SEUIL_ALERTE_DECLINE    = 20.0   # %/an — déclin accéléré anormal
+SEUIL_FLARING_ALERTE    = 0.10   # 10% — alerte réglementaire
 
-# ─────────────────────────────────────────────────────
-# PROFILS PUITS — Productions proches réalité
-# ─────────────────────────────────────────────────────
-PROFILS_PUITS = {
-    # BALEINE — Production depuis 2023
-    "Baleine-A": {
-        "prod_base": 6500, "declin": 0.003,
-        "wc_base": 0.18,  "pression_base": 580,
-        "champ": "Baleine", "lat": 4.848, "lon": -3.983,
-        "type": "Producteur", "profondeur_m": 3800
-    },
-    "Baleine-B": {
-        "prod_base": 5800, "declin": 0.003,
-        "wc_base": 0.22,  "pression_base": 560,
-        "champ": "Baleine", "lat": 4.852, "lon": -3.987,
-        "type": "Producteur", "profondeur_m": 3750
-    },
-    "Baleine-C": {
-        "prod_base": 4700, "declin": 0.004,
-        "wc_base": 0.25,  "pression_base": 545,
-        "champ": "Baleine", "lat": 4.855, "lon": -3.991,
-        "type": "Producteur", "profondeur_m": 3820
-    },
-    # SANKOFA — En production depuis 2017
-    "Sankofa-1": {
-        "prod_base": 8500, "declin": 0.006,
-        "wc_base": 0.32,  "pression_base": 420,
-        "champ": "Sankofa", "lat": 4.115, "lon": -3.451,
-        "type": "Producteur", "profondeur_m": 2900
-    },
-    "Sankofa-2": {
-        "prod_base": 7800, "declin": 0.006,
-        "wc_base": 0.35,  "pression_base": 410,
-        "champ": "Sankofa", "lat": 4.120, "lon": -3.456,
-        "type": "Producteur", "profondeur_m": 2850
-    },
-    "Sankofa-3": {
-        "prod_base": 6200, "declin": 0.007,
-        "wc_base": 0.38,  "pression_base": 395,
-        "champ": "Sankofa", "lat": 4.125, "lon": -3.461,
-        "type": "Producteur", "profondeur_m": 2920
-    },
-    "Sankofa-GAS": {
-        "prod_base": 0, "declin": 0.002,
-        "wc_base": 0.05,  "pression_base": 380,
-        "champ": "Sankofa", "lat": 4.118, "lon": -3.448,
-        "type": "Producteur gaz", "profondeur_m": 2800
-    },
-    # FOXTROT — En déclin depuis 2010
-    "Foxtrot-1": {
-        "prod_base": 1800, "declin": 0.015,
-        "wc_base": 0.62,  "pression_base": 185,
-        "champ": "Foxtrot", "lat": 3.888, "lon": -3.232,
-        "type": "Producteur", "profondeur_m": 2100
-    },
-    "Foxtrot-2": {
-        "prod_base": 1200, "declin": 0.018,
-        "wc_base": 0.72,  "pression_base": 165,
-        "champ": "Foxtrot", "lat": 3.893, "lon": -3.237,
-        "type": "Producteur", "profondeur_m": 2050
-    },
-    # BAOBAB — En déclin depuis 2012
-    "Baobab-1": {
-        "prod_base": 3200, "declin": 0.009,
-        "wc_base": 0.48,  "pression_base": 265,
-        "champ": "Baobab", "lat": 4.348, "lon": -3.675,
-        "type": "Producteur", "profondeur_m": 2600
-    },
-    "Baobab-2": {
-        "prod_base": 2800, "declin": 0.010,
-        "wc_base": 0.52,  "pression_base": 255,
-        "champ": "Baobab", "lat": 4.352, "lon": -3.680,
-        "type": "Producteur", "profondeur_m": 2650
-    },
-    "Baobab-3W": {
-        "prod_base": 1500, "declin": 0.012,
-        "wc_base": 0.58,  "pression_base": 240,
-        "champ": "Baobab", "lat": 4.355, "lon": -3.683,
-        "type": "Producteur", "profondeur_m": 2580
-    },
-    # LION — En fin de vie
-    "Lion-1": {
-        "prod_base": 800, "declin": 0.020,
-        "wc_base": 0.78,  "pression_base": 145,
-        "champ": "Lion", "lat": 4.048, "lon": -3.348,
-        "type": "Producteur", "profondeur_m": 1800
-    },
-    # PANTHERE — En fin de vie
-    "Panthere-1": {
-        "prod_base": 500, "declin": 0.022,
-        "wc_base": 0.82,  "pression_base": 130,
-        "champ": "Panthere", "lat": 4.068, "lon": -3.368,
-        "type": "Producteur", "profondeur_m": 1750
-    },
-}
-
-# ─────────────────────────────────────────────────────
-# BENCHMARKS INDUSTRIE O&G — Côte d'Ivoire
-# Sources : SPE, IHS Markit, rapports PETROCI publics
-# ─────────────────────────────────────────────────────
-BENCHMARKS = {
-    "water_cut_moyen_ci":     0.42,   # 42% moyen CI
-    "water_cut_alerte":       0.55,   # Seuil alerte
-    "water_cut_critique":     0.70,   # Seuil critique
-    "declin_annuel_normal":   0.18,   # 18%/an normal offshore CI
-    "declin_annuel_rapide":   0.30,   # 30%/an = déclin rapide
-    "uptime_cible":           0.95,   # 95% temps fonctionnement
-    "gor_normal_min":         400,    # scf/stb
-    "gor_normal_max":         1500,   # scf/stb
-    "pression_min_ops":       150,    # psi min opérationnel
-    "production_min_viable":  500,    # bbl/j min économique
-    "cout_prod_offshore_ci":  18.5,   # USD/bbl coût de production
-}
-
-# ─────────────────────────────────────────────────────
-# SEUILS D'ALERTE
-# ─────────────────────────────────────────────────────
-SEUILS = {
-    "water_cut_alerte":   BENCHMARKS["water_cut_alerte"],
-    "water_cut_critique": BENCHMARKS["water_cut_critique"],
-    "production_min_bbl": BENCHMARKS["production_min_viable"],
-    "pression_min_psi":   BENCHMARKS["pression_min_ops"],
-    "declin_mensuel_max": BENCHMARKS["declin_annuel_rapide"] / 12,
-}
-
-CHAMPS    = CHAMPS_PRODUCTION
-PRIX_BARIL = PRIX_BARIL
-TAUX      = TAUX_USD_XOF
+# ─── RAPPORT ─────────────────────────────────────────────────────────────────
+RAPPORT_LOGO_PATH   = "assets/logo_petro_africa.png"
+RAPPORT_FOOTER      = "PETRO AFRICA Dashboard — Confidentiel"
+RAPPORT_AUTEUR      = "PETRO AFRICA Analytics Platform"
+EXCEL_COULEUR_HEADER = "1B4F72"   # Bleu pétrole (hex sans #)
+EXCEL_COULEUR_ACCENT = "F39C12"   # Or/orange
