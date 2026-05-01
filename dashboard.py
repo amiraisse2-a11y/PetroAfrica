@@ -110,7 +110,7 @@ from config import (PRIX_BARIL, TAUX, PROFILS_PUITS,
                      CHAMPS_PRODUCTION, BLOCS_EXPLORATION,
                      BENCHMARKS, SEUILS)
 
-DB_PATH = "petro_africa.db"
+DB_PATH = "petroci_pro.db"  # ← corrigé : aligné avec database.py et data_real_ci.py
 
 # ════════════════════════════════════════════
 # INITIALISATION
