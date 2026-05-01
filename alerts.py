@@ -7,7 +7,7 @@ from email.mime.multipart import MIMEMultipart
 from datetime import date, timedelta
 import streamlit as st
 from database import lire_production, sauvegarder_alerte, lire_alertes
-from config import SEUILS, BENCHMARKS
+from config import SEUILS, BENCHMARKS, TAUX  # ← TAUX ajouté ici
 
 # ─────────────────────────────────────────
 # VÉRIFIER TOUTES LES ALERTES
@@ -207,7 +207,7 @@ def envoyer_rapport_quotidien(df_kpis, rapport_champ):
                     <b>${rev:,.0f} USD</b></td></tr>
             <tr><td style="padding:8px;">En FCFA</td>
                 <td style="padding:8px;text-align:right;">
-                    <b>{rev*615/1e6:.1f}M FCFA</b></td></tr>
+                    <b>{rev*TAUX/1e6:.1f}M FCFA</b></td></tr>
             <tr style="background:#f0f0f0;">
                 <td style="padding:8px;">Puits actifs</td>
                 <td style="padding:8px;text-align:right;">
