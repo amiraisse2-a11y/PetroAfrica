@@ -1709,7 +1709,7 @@ elif page == "Finances":
                       .sum()
                       .reset_index())
             df_rev["revenu_usd"] = df_rev["production_huile_bbl"] * PRIX_BARIL
-            df_rev["cout_usd"]   = df_rev["revenu_usd"] * TAUX.get("opex_ratio", 0.35)
+            df_rev["cout_usd"]   = df_rev["revenu_usd"] * 0.35  # OPEX ratio 35%
             df_rev["marge_usd"]  = df_rev["revenu_usd"] - df_rev["cout_usd"]
 
             cg, cd = st.columns(2)
