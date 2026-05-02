@@ -118,6 +118,8 @@ def afficher_page_login():
             st.session_state["connecte"]  = True
             st.session_state["user"]      = user
             st.session_state["email"]     = email
+            # ── Persister dans query_params pour survivre au refresh ──
+            st.query_params["session"] = email
             st.success(f"Bienvenue {user['nom']} !")
             st.rerun()
         else:
@@ -138,17 +140,42 @@ def afficher_page_login():
     return False
 
 def verifier_session():
-    """Vérifie si l'utilisateur est connecté"""
-    return st.session_state.get("connecte", False)
+    """Vérifie si l'utilisateur est connecté.
+    Si session_state est vide (refresh navigateur), tente de restaurer
+    la session depuis st.query_params sans redemander le login.
+    """
+    # Cas normal : session déjà en mémoire
+    if st.session_state.get("connecte", False):
+        return True
+
+    # Cas refresh : session_state vidé mais query_params intact
+    email_saved = st.query_params.get("session", "")
+    if email_saved:
+        user_data = UTILISATEURS_DEMO.get(email_saved.strip().lower())
+        if user_data:
+            st.session_state["connecte"] = True
+            st.session_state["email"]    = email_saved
+            st.session_state["user"]     = {
+                "email":     email_saved,
+                "nom":       user_data["nom"],
+                "role":      user_data["role"],
+                "compagnie": user_data["compagnie"],
+                "acces":     user_data["acces"],
+            }
+            return True
+
+    return False
 
 def get_user():
     """Retourne l'utilisateur connecté"""
     return st.session_state.get("user", {})
 
 def deconnecter():
-    """Déconnecte l'utilisateur"""
-    for key in ["connecte","user","email"]:
+    """Déconnecte l'utilisateur et nettoie query_params"""
+    for key in ["connecte", "user", "email"]:
         st.session_state.pop(key, None)
+    # Effacer le token de session de l'URL
+    st.query_params.clear()
     st.rerun()
 
 def verifier_acces_champ(champ):
