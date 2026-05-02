@@ -441,7 +441,7 @@ def render_reservoir_page():
 
             st.markdown("<br>", unsafe_allow_html=True)
             st.plotly_chart(fig_pz_plot(df_pz, ogip, champ_gaz),
-                            use_container_width=True)
+                            width='stretch')
 
             # Tableau P/z
             st.dataframe(
@@ -450,7 +450,7 @@ def render_reservoir_page():
                                "Gp (MMscf)": "{:,.0f}"})
                      .set_properties(**{"background-color": "#1A2332",
                                         "color": "#ECF0F1"}),
-                use_container_width=True,
+                width='stretch',
                 hide_index=True,
             )
 
@@ -527,7 +527,7 @@ def render_reservoir_page():
                         point_test=(q_test, pwf_test),
                         point_op=pt_op,
                         puit_nom=f"{champ_h} — {puit_id}"),
-                use_container_width=True,
+                width='stretch',
             )
 
             # Analyse sensibilité Pr déclinant
@@ -555,7 +555,7 @@ def render_reservoir_page():
                 legend=dict(x=0.5, y=0.99),
                 margin=dict(t=50, b=30, l=10, r=10),
             )
-            st.plotly_chart(fig_depletion, use_container_width=True)
+            st.plotly_chart(fig_depletion, width='stretch')
 
         st.markdown("---")
         st.caption(
