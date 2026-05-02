@@ -27,6 +27,11 @@ st.markdown("""
 /* ── Global ── */
 .stApp { background-color: #F4F6F9; }
 
+/* ── Padding bas pour eviter la barre noire Streamlit ── */
+.block-container {
+    padding-bottom: 90px !important;
+}
+
 /* ── Sidebar ── */
 [data-testid="stSidebar"] {
     background: linear-gradient(180deg,#FFFFFF 0%,#FFF8F0 100%);
@@ -58,7 +63,7 @@ st.markdown("""
 /* ── Mobile ── */
 @media (max-width: 768px) {
     [data-testid="stSidebar"] { width: 280px !important; }
-    .block-container { padding: 8px 10px !important; }
+    .block-container { padding: 8px 10px 90px 10px !important; }
     h1 { font-size: 1.2rem !important; }
     h2 { font-size: 1rem !important; }
     /* Header toujours visible sur mobile */
@@ -156,7 +161,7 @@ def header(titre, sous=""):
     st.markdown(f"""
     <div style="background:linear-gradient(135deg,#C96A00,#E07B00,#F0A500);
                 border-radius:14px;padding:22px 28px 18px 28px;
-                margin-bottom:24px;margin-top:4px;
+                margin-bottom:24px;margin-top:18px;
                 box-shadow:0 6px 24px rgba(224,123,0,0.35);
                 border-left:6px solid rgba(255,255,255,0.4);
                 position:relative;overflow:hidden;">
