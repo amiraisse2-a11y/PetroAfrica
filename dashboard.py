@@ -234,7 +234,48 @@ PAGES = [
     "Rapports",
 ]
 
-page = st.sidebar.radio("Navigation", PAGES, label_visibility="collapsed")
+# Initialiser la page courante en session_state
+if "page_active" not in st.session_state:
+    st.session_state["page_active"] = "Tableau de Bord"
+
+def changer_page():
+    """Callback : ferme la sidebar sur mobile après sélection"""
+    st.session_state["page_active"] = st.session_state["_nav_radio"]
+    # Injection JS pour fermer la sidebar sur mobile
+    st.session_state["_close_sidebar"] = True
+
+page = st.sidebar.radio(
+    "Navigation",
+    PAGES,
+    index=PAGES.index(st.session_state["page_active"]),
+    key="_nav_radio",
+    on_change=changer_page,
+    label_visibility="collapsed"
+)
+page = st.session_state["page_active"]
+
+# ── Fermeture automatique sidebar sur mobile ──────────────────────────────────
+if st.session_state.pop("_close_sidebar", False):
+    st.markdown("""
+    <script>
+    // Ferme la sidebar sur mobile en simulant un clic sur le bouton fermer
+    (function() {
+        const tryClose = (attempt) => {
+            const btn = document.querySelector(
+                '[data-testid="stSidebarCollapseButton"] button, ' +
+                'button[kind="header"][aria-label="Close sidebar"], ' +
+                'section[data-testid="stSidebar"] button[aria-expanded="true"]'
+            );
+            if (btn && window.innerWidth <= 768) {
+                btn.click();
+            } else if (attempt < 8) {
+                setTimeout(() => tryClose(attempt + 1), 120);
+            }
+        };
+        setTimeout(() => tryClose(0), 80);
+    })();
+    </script>
+    """, unsafe_allow_html=True)
 
 st.sidebar.markdown(
     '<hr style="border-color:rgba(224,123,0,0.2);margin:8px 0;">',
