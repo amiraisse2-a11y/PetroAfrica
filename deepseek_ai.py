@@ -199,9 +199,9 @@ def render_assistant_ia():
         )
     with col_i:
         if modele == "deepseek-v4-flash":
-            st.info("🚀 **V4-Flash** — Questions rapides, monitoring · ~$0.001/question")
+            st.info("🚀 **V4-Flash** — Usage quotidien & questions rapides : monitoring production, alertes puits, water cut, statut ESP, calculs simples")
         else:
-            st.info("⚡ **V4-Pro** — PSC, EUR, reservoir, analyse complexe · ~$0.01/analyse")
+            st.info("⚡ **V4-Pro** — Analyses complexes : PSC, sismique, EUR/IRR, déclin réservoir, interprétation logs, rapports techniques, modélisation économique")
 
     # Session state
     if "chat_history"    not in st.session_state:
