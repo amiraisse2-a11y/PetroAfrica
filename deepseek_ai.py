@@ -117,7 +117,7 @@ def ask_deepseek(messages_history, modele="deepseek-v4-flash"):
         response = client.chat.completions.create(
             model=modele,
             messages=messages,
-            max_tokens=2000,
+            max_tokens=4000,
             temperature=0.3,
         )
         return response.choices[0].message.content, None
@@ -162,7 +162,7 @@ Fournis :
                 {"role": "system", "content": SYSTEM_PROMPT},
                 {"role": "user",   "content": prompt}
             ],
-            max_tokens=1500,
+            max_tokens=4000,
             temperature=0.2,
         )
         return response.choices[0].message.content
@@ -338,12 +338,4 @@ def render_assistant_ia():
             )
         st.rerun()
 
-    # Info cout
-    st.markdown("""
-    <div style="background:#FFF8F0;border:1px solid rgba(224,123,0,0.2);
-                border-radius:8px;padding:10px 14px;margin-top:12px;
-                font-size:0.73rem;color:#888;">
-        V4-Flash ~$0.001/question · V4-Pro ~$0.01/analyse complexe ·
-        Recharge minimum $2 sur platform.deepseek.com
-    </div>
-    """, unsafe_allow_html=True)
+
