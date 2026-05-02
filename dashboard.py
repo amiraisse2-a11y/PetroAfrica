@@ -232,6 +232,8 @@ PAGES = [
     "Benchmarks",
     "Alertes",
     "Rapports",
+    "Finances",
+    "ESG / Flaring",
 ]
 
 # Initialiser la page courante en session_state
@@ -1632,3 +1634,325 @@ elif page == "Rapports":
         <script>window.print();</script>
         """, unsafe_allow_html=True)
         st.info("Utilisez Ctrl+P ou la fonction impression de votre navigateur.")
+
+
+# ════════════════════════════════════════════
+# PAGE 11 — FINANCES
+# ════════════════════════════════════════════
+elif page == "Finances":
+
+    header("Analyse Financiere",
+           f"Revenus, Couts et Marge — {periode_label}")
+
+    rapport = production_par_champ(nb_jours)
+    kpis    = kpis_journaliers()
+
+    if not rapport.empty:
+
+        # ── KPIs financiers ──────────────────────────────────
+        rev_total   = rapport["Revenu_USD"].sum()
+        cout_total  = rapport["Cout_USD"].sum()
+        marge_total = rapport["Marge_USD"].sum()
+        marge_pct   = (marge_total / rev_total * 100) if rev_total > 0 else 0
+        rev_fcfa    = rapport["Revenu_FCFA"].sum()
+        prix_bbl    = PRIX_BARIL
+
+        c1, c2, c3, c4, c5 = st.columns(5)
+        with c1: kpi("Revenus USD",
+                      f"${rev_total/1e6:.1f}M",
+                      f"{periode_label}", "#27AE60", "💵")
+        with c2: kpi("Revenus FCFA",
+                      f"{rev_fcfa/1e9:.2f} Mds",
+                      "FCFA", "#27AE60", "💶")
+        with c3: kpi("Couts Operatoires",
+                      f"${cout_total/1e6:.1f}M",
+                      "OPEX total", "#E74C3C", "💸")
+        with c4: kpi("Marge Nette",
+                      f"${marge_total/1e6:.1f}M",
+                      f"{marge_pct:.1f}% du CA", "#E07B00", "📈")
+        with c5: kpi("Prix Baril",
+                      f"${prix_bbl}",
+                      "USD/bbl reference", "#8E44AD", "🛢️")
+
+        st.markdown("<br>", unsafe_allow_html=True)
+
+        # ── Graphique Revenus / Couts / Marge par Champ ──────
+        fig_bar = go.Figure()
+        fig_bar.add_trace(go.Bar(
+            x=rapport["champ"], y=rapport["Revenu_USD"] / 1e6,
+            name="Revenus", marker_color="#27AE60", opacity=0.85
+        ))
+        fig_bar.add_trace(go.Bar(
+            x=rapport["champ"], y=rapport["Cout_USD"] / 1e6,
+            name="Couts OPEX", marker_color="#E74C3C", opacity=0.85
+        ))
+        fig_bar.add_trace(go.Bar(
+            x=rapport["champ"], y=rapport["Marge_USD"] / 1e6,
+            name="Marge", marker_color="#E07B00", opacity=0.9
+        ))
+        fig_bar.update_layout(
+            title=f"Revenus / Couts / Marge par Champ (M USD) — {periode_label}",
+            barmode="group",
+            xaxis=dict(gridcolor="#EEE"),
+            yaxis=dict(gridcolor="#EEE", title="Millions USD"),
+            legend=dict(bgcolor="white",
+                        bordercolor="rgba(224,123,0,0.3)"),
+            **LAYOUT
+        )
+        st.plotly_chart(fig_bar, use_container_width=True, config=CFG_PLOTLY)
+
+        # ── Evolution revenus dans le temps ──────────────────
+        df_hist_fin = historique_champs(nb_jours)
+        if not df_hist_fin.empty:
+            df_rev = (df_hist_fin
+                      .groupby("date")["production_huile_bbl"]
+                      .sum()
+                      .reset_index())
+            df_rev["revenu_usd"] = df_rev["production_huile_bbl"] * PRIX_BARIL
+            df_rev["cout_usd"]   = df_rev["revenu_usd"] * TAUX.get("opex_ratio", 0.35)
+            df_rev["marge_usd"]  = df_rev["revenu_usd"] - df_rev["cout_usd"]
+
+            cg, cd = st.columns(2)
+            with cg:
+                fig_ev = go.Figure()
+                fig_ev.add_trace(go.Scatter(
+                    x=df_rev["date"], y=df_rev["revenu_usd"] / 1e3,
+                    fill="tozeroy", name="Revenus",
+                    fillcolor="rgba(39,174,96,0.12)",
+                    line=dict(color="#27AE60", width=2.5)
+                ))
+                fig_ev.add_trace(go.Scatter(
+                    x=df_rev["date"], y=df_rev["marge_usd"] / 1e3,
+                    fill="tozeroy", name="Marge",
+                    fillcolor="rgba(224,123,0,0.1)",
+                    line=dict(color="#E07B00", width=2)
+                ))
+                fig_ev.update_layout(
+                    title="Evolution Revenus et Marge (k USD)",
+                    xaxis=dict(gridcolor="#EEE", color="#888"),
+                    yaxis=dict(gridcolor="#EEE", title="k USD"),
+                    hovermode="x unified", **LAYOUT
+                )
+                st.plotly_chart(fig_ev, use_container_width=True,
+                                config=CFG_PLOTLY)
+
+            with cd:
+                # Répartition revenus par champ (donut)
+                fig_pie = px.pie(
+                    rapport, values="Revenu_USD", names="champ",
+                    title="Repartition Revenus par Champ",
+                    color_discrete_sequence=COLORS["defaut"],
+                    hole=0.45
+                )
+                fig_pie.update_layout(**LAYOUT)
+                st.plotly_chart(fig_pie, use_container_width=True,
+                                config=CFG_PLOTLY)
+
+        # ── Tableau financier détaillé ────────────────────────
+        st.markdown("""
+        <div style="color:#999;font-size:0.7rem;letter-spacing:1.5px;
+                    text-transform:uppercase;margin:12px 0 8px 0;
+                    font-weight:600;">Detail Financier par Champ</div>
+        """, unsafe_allow_html=True)
+
+        aff = rapport[["champ", "Production_Totale",
+                        "Revenu_USD", "Cout_USD",
+                        "Marge_USD", "Revenu_FCFA",
+                        "WaterCut_Moyen"]].copy()
+        aff["Production_Totale"] = aff["Production_Totale"].map("{:,.0f} bbl".format)
+        aff["Revenu_USD"]        = aff["Revenu_USD"].map("${:,.0f}".format)
+        aff["Cout_USD"]          = aff["Cout_USD"].map("${:,.0f}".format)
+        aff["Marge_USD"]         = aff["Marge_USD"].map("${:,.0f}".format)
+        aff["Revenu_FCFA"]       = aff["Revenu_FCFA"].map("{:,.0f} XOF".format)
+        aff["WaterCut_Moyen"]    = aff["WaterCut_Moyen"].map("{:.1%}".format)
+        aff.columns = ["Champ", "Production", "Revenu USD",
+                        "Cout OPEX", "Marge", "Revenu FCFA", "WC Moyen"]
+        st.dataframe(aff, use_container_width=True, hide_index=True)
+
+        # ── Export CSV finances ───────────────────────────────
+        st.divider()
+        st.download_button(
+            "Telecharger rapport financier CSV",
+            data=rapport.to_csv(index=False).encode("utf-8"),
+            file_name=f"finances_petro_africa_{date.today()}.csv",
+            mime="text/csv",
+            use_container_width=True
+        )
+
+    else:
+        st.info("Aucune donnee financiere disponible pour cette periode.")
+
+
+# ════════════════════════════════════════════
+# PAGE 12 — ESG / FLARING
+# ════════════════════════════════════════════
+elif page == "ESG / Flaring":
+
+    header("ESG & Gaz Torche (Flaring)",
+           "Emissions CO2, conformite environnementale — Offshore CI")
+
+    df_prod_esg = lire_production(
+        date_debut=str(date_debut), date_fin=str(date_fin)
+    )
+
+    if not df_prod_esg.empty:
+
+        # ── Calculs ESG ───────────────────────────────────────
+        gaz_total_mmscf  = df_prod_esg["production_gaz_mmscf"].sum()
+        # Hypothese : 15% du gaz produit est torche (flaring ratio standard CI)
+        FLARING_RATIO    = 0.15
+        flare_mmscf      = gaz_total_mmscf * FLARING_RATIO
+        # 1 MMscf gaz torche ≈ 54 tonnes CO2
+        co2_tonnes       = flare_mmscf * 54
+        prod_huile_total = df_prod_esg["production_huile_bbl"].sum()
+        # CO2 intensite (tCO2 / 1000 bbl)
+        intensite_co2    = (co2_tonnes / prod_huile_total * 1000
+                            if prod_huile_total > 0 else 0)
+        # Benchmark industrie Afrique : 25 tCO2/1000 bbl
+        BENCH_CO2        = 25.0
+        statut_esg       = "Conforme" if intensite_co2 < BENCH_CO2 else "Non conforme"
+        couleur_esg      = "#27AE60" if statut_esg == "Conforme" else "#E74C3C"
+
+        c1, c2, c3, c4 = st.columns(4)
+        with c1: kpi("Gaz Produit",
+                      f"{gaz_total_mmscf:.1f}",
+                      "MMscf", "#27AE60", "⛽")
+        with c2: kpi("Gaz Torche (15%)",
+                      f"{flare_mmscf:.1f}",
+                      "MMscf", "#F0A500", "🔥")
+        with c3: kpi("Emissions CO2",
+                      f"{co2_tonnes:.0f}",
+                      "tonnes", "#E74C3C", "💨")
+        with c4: kpi("Statut ESG",
+                      statut_esg,
+                      f"Intensite : {intensite_co2:.1f} tCO2/kbbl",
+                      couleur_esg, "🌱")
+
+        st.markdown("<br>", unsafe_allow_html=True)
+
+        # ── Flaring par champ ─────────────────────────────────
+        df_esg_champ = (df_prod_esg
+                        .groupby("champ")["production_gaz_mmscf"]
+                        .sum()
+                        .reset_index())
+        df_esg_champ["flare_mmscf"]  = df_esg_champ["production_gaz_mmscf"] * FLARING_RATIO
+        df_esg_champ["co2_tonnes"]   = df_esg_champ["flare_mmscf"] * 54
+        df_esg_champ["gaz_valorise"] = df_esg_champ["production_gaz_mmscf"] * (1 - FLARING_RATIO)
+
+        cg, cd = st.columns(2)
+        with cg:
+            fig_flare = go.Figure()
+            fig_flare.add_trace(go.Bar(
+                x=df_esg_champ["champ"],
+                y=df_esg_champ["gaz_valorise"],
+                name="Gaz Valorise", marker_color="#27AE60"
+            ))
+            fig_flare.add_trace(go.Bar(
+                x=df_esg_champ["champ"],
+                y=df_esg_champ["flare_mmscf"],
+                name="Gaz Torche", marker_color="#E74C3C"
+            ))
+            fig_flare.update_layout(
+                title="Gaz Valorise vs Torche par Champ (MMscf)",
+                barmode="stack",
+                xaxis=dict(gridcolor="#EEE"),
+                yaxis=dict(gridcolor="#EEE", title="MMscf"),
+                legend=dict(bgcolor="white"),
+                **LAYOUT
+            )
+            st.plotly_chart(fig_flare, use_container_width=True,
+                            config=CFG_PLOTLY)
+
+        with cd:
+            fig_co2 = go.Figure(go.Bar(
+                x=df_esg_champ["champ"],
+                y=df_esg_champ["co2_tonnes"],
+                text=[f"{v:,.0f} t" for v in df_esg_champ["co2_tonnes"]],
+                textposition="outside",
+                marker=dict(
+                    color=["#27AE60" if v < BENCH_CO2 * 100
+                           else "#E74C3C"
+                           for v in df_esg_champ["co2_tonnes"]]
+                )
+            ))
+            fig_co2.update_layout(
+                title="Emissions CO2 par Champ (tonnes)",
+                xaxis=dict(gridcolor="#EEE"),
+                yaxis=dict(gridcolor="#EEE", title="tCO2"),
+                **LAYOUT
+            )
+            st.plotly_chart(fig_co2, use_container_width=True,
+                            config=CFG_PLOTLY)
+
+        # ── Evolution flaring dans le temps ──────────────────
+        df_time_esg = (df_prod_esg
+                       .groupby("date")["production_gaz_mmscf"]
+                       .sum()
+                       .reset_index())
+        df_time_esg["flare"] = df_time_esg["production_gaz_mmscf"] * FLARING_RATIO
+        df_time_esg["co2"]   = df_time_esg["flare"] * 54
+
+        fig_ev_co2 = go.Figure(go.Scatter(
+            x=df_time_esg["date"], y=df_time_esg["co2"],
+            fill="tozeroy",
+            fillcolor="rgba(231,76,60,0.1)",
+            line=dict(color="#E74C3C", width=2),
+            name="CO2 quotidien (t)"
+        ))
+        fig_ev_co2.update_layout(
+            title="Evolution Emissions CO2 Quotidiennes",
+            xaxis=dict(gridcolor="#EEE", color="#888"),
+            yaxis=dict(gridcolor="#EEE", title="tonnes CO2"),
+            hovermode="x unified", **LAYOUT
+        )
+        st.plotly_chart(fig_ev_co2, use_container_width=True,
+                        config=CFG_PLOTLY)
+
+        # ── Tableau conformité ESG ────────────────────────────
+        st.markdown("""
+        <div style="color:#999;font-size:0.7rem;letter-spacing:1.5px;
+                    text-transform:uppercase;margin:12px 0 8px 0;
+                    font-weight:600;">Tableau de Conformite ESG par Champ</div>
+        """, unsafe_allow_html=True)
+
+        df_conf = df_esg_champ.copy()
+        df_conf["Intensite tCO2/kbbl"] = (
+            df_conf["co2_tonnes"] /
+            df_prod_esg.groupby("champ")["production_huile_bbl"]
+            .sum().reindex(df_conf["champ"].values).values * 1000
+        ).round(2)
+        df_conf["Statut"] = df_conf["Intensite tCO2/kbbl"].apply(
+            lambda x: "✅ Conforme" if x < BENCH_CO2 else "❌ Non conforme"
+        )
+        df_conf["Gaz Valorise (MMscf)"] = df_conf["gaz_valorise"].map("{:.1f}".format)
+        df_conf["Gaz Torche (MMscf)"]   = df_conf["flare_mmscf"].map("{:.1f}".format)
+        df_conf["CO2 (tonnes)"]          = df_conf["co2_tonnes"].map("{:,.0f}".format)
+
+        st.dataframe(
+            df_conf[["champ", "Gaz Valorise (MMscf)",
+                      "Gaz Torche (MMscf)", "CO2 (tonnes)",
+                      "Intensite tCO2/kbbl", "Statut"]],
+            use_container_width=True, hide_index=True
+        )
+
+        # ── Encadré réglementaire ─────────────────────────────
+        st.markdown(f"""
+        <div style="background:#F0FFF4;border-left:5px solid #27AE60;
+                    border-radius:0 10px 10px 0;padding:14px 18px;
+                    margin-top:16px;">
+            <div style="color:#1A7A4A;font-weight:700;margin-bottom:6px;">
+                Reglementation & Objectifs
+            </div>
+            <div style="color:#555;font-size:0.85rem;line-height:1.7;">
+                • <b>Accord de Paris</b> : Reduction 30% emissions d'ici 2030<br>
+                • <b>Benchmark industrie Afrique</b> : &lt; {BENCH_CO2} tCO2 / 1000 bbl<br>
+                • <b>Code Petrolier CI</b> : Zero flaring routine d'ici 2030<br>
+                • <b>ENI Net Zero</b> : Objectif zero emission nette 2050<br>
+                • <b>Statut actuel PETRO AFRICA</b> :
+                  <b style="color:{couleur_esg};">{statut_esg}</b>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    else:
+        st.info("Aucune donnee ESG disponible pour cette periode.")
