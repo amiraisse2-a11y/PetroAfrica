@@ -137,11 +137,15 @@ def _login_local(email: str, mdp: str):
 # ─────────────────────────────────────────
 def verifier_login(email: str, mdp: str):
     """
-    Tente Supabase Auth en priorité, bascule sur fallback local si indisponible.
-    Aucun mot de passe n'est jamais stocké ou comparé en clair.
+    Tente Supabase Auth en priorité.
+    Si Supabase Auth échoue (utilisateur non inscrit dans Supabase Auth),
+    bascule automatiquement sur le fallback local hashé.
     """
     if _supabase_disponible():
-        return _login_supabase(email, mdp)
+        user = _login_supabase(email, mdp)
+        if user:
+            return user
+    # Fallback local — toujours disponible
     return _login_local(email, mdp)
 
 # ─────────────────────────────────────────
