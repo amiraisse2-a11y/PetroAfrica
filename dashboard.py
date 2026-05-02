@@ -106,6 +106,7 @@ from analytics import (kpis_journaliers, production_par_champ,
 from alerts import (verifier_alertes, resume_alertes,
                      envoyer_email_alerte, envoyer_rapport_quotidien)
 from reports import generer_rapport_pdf
+from reservoir import render_reservoir_page
 from config import (PRIX_BARIL, TAUX, PROFILS_PUITS,
                      CHAMPS_PRODUCTION, BLOCS_EXPLORATION,
                      BENCHMARKS, SEUILS)
@@ -224,6 +225,7 @@ st.sidebar.markdown(
 PAGES = [
     "Tableau de Bord",
     "Puits et Champs",
+    "Ingenierie Reservoir",
     "Exploration",
     "Analyse Production",
     "Saisie des Donnees",
@@ -620,6 +622,12 @@ elif page == "Puits et Champs":
             )
             st.plotly_chart(fig2, use_container_width=True,
                             config=CFG_PLOTLY)
+
+# ════════════════════════════════════════════
+# PAGE 2b — INGENIERIE RESERVOIR
+# ════════════════════════════════════════════
+elif page == "Ingenierie Reservoir":
+    render_reservoir_page()
 
 # ════════════════════════════════════════════
 # PAGE 3 — EXPLORATION
