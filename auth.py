@@ -13,36 +13,36 @@ def _hash(mdp: str) -> str:
     return hashlib.sha256(mdp.encode()).hexdigest()
 
 UTILISATEURS_FALLBACK = {
-    "admin@petroci.ci": {
-        "hash":      _hash("petroci2026"),
-        "nom":       "Administrateur PETROCI",
+    "admin@petroafrica.ci": {
+        "hash":      _hash("PA_Admin#2026"),
+        "nom":       "Administrateur PETRO AFRICA",
         "role":      "admin",
-        "compagnie": "PETROCI",
+        "compagnie": "PETRO AFRICA",
         "acces":     ["Baleine","Sankofa","Foxtrot","Baobab","Lion","Panthere"],
     },
-    "eni@baleine.ci": {
-        "hash":      _hash("baleine2026"),
-        "nom":       "Ingenieur ENI",
+    "eni@petroafrica.ci": {
+        "hash":      _hash("ENI_Bal@7834"),
+        "nom":       "Ingenieur ENI CI",
         "role":      "operateur",
         "compagnie": "ENI",
         "acces":     ["Baleine"],
     },
-    "total@sankofa.ci": {
-        "hash":      _hash("sankofa2026"),
+    "total@petroafrica.ci": {
+        "hash":      _hash("TTE_Snk#5521"),
         "nom":       "Ingenieur TotalEnergies",
         "role":      "operateur",
         "compagnie": "TotalEnergies",
         "acces":     ["Sankofa","Foxtrot","Lion","Panthere"],
     },
-    "cnr@baobab.ci": {
-        "hash":      _hash("baobab2026"),
-        "nom":       "Ingenieur CNR",
+    "cnr@petroafrica.ci": {
+        "hash":      _hash("CNR_Bao@3318"),
+        "nom":       "Ingenieur CNR International",
         "role":      "operateur",
         "compagnie": "CNR International",
         "acces":     ["Baobab"],
     },
-    "demo@petroci.ci": {
-        "hash":      _hash("demo2026"),
+    "demo@petroafrica.ci": {
+        "hash":      _hash("Demo_PA#0012"),
         "nom":       "Utilisateur Demo",
         "role":      "viewer",
         "compagnie": "Demo",
@@ -203,7 +203,7 @@ def afficher_page_login():
             )
 
     if demo_btn:
-        user = _login_local("demo@petroci.ci", "demo2026")
+        user = _login_local("demo@petroafrica.ci", "Demo_PA#0012")
         if user:
             _enregistrer_session(user)
             st.rerun()
