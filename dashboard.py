@@ -115,6 +115,7 @@ from reservoir import render_reservoir_page
 from config import (PRIX_BARIL, TAUX, PROFILS_PUITS,
                      CHAMPS_PRODUCTION, BLOCS_EXPLORATION,
                      BENCHMARKS, SEUILS)
+from deepseek_ai import render_assistant_ia
 
 DB_PATH = "petroci_pro.db"  # ← corrigé : aligné avec database.py et data_real_ci.py
 
@@ -241,6 +242,7 @@ PAGES = [
     "Rapports",
     "Finances",
     "ESG / Flaring",
+    "🤖 Assistant IA",
 ]
 
 # Initialiser la page courante en session_state
@@ -1969,3 +1971,9 @@ elif page == "ESG / Flaring":
 
     else:
         st.info("Aucune donnee ESG disponible pour cette periode.")
+
+# ════════════════════════════════════════════
+# PAGE 13 — ASSISTANT IA (DeepSeek V4-Pro)
+# ════════════════════════════════════════════
+elif page == "🤖 Assistant IA":
+    render_assistant_ia()
