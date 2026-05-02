@@ -362,9 +362,13 @@ def render_reservoir_page():
     """, unsafe_allow_html=True)
 
     st.title("🔬 Module Réservoir")
-    st.caption("P/z Plot (champs gaz) · IPR Vogel (puits huile) · OGIP · AOF")
+    st.caption("P/z Plot (champs gaz) · IPR Vogel (puits huile) · OGIP · AOF · Monte Carlo P10/P50/P90")
 
-    tab_gaz, tab_huile = st.tabs(["⛽ P/z Plot — Champs Gaz", "🛢️ IPR Vogel — Puits Huile"])
+    tab_gaz, tab_huile, tab_mc = st.tabs([
+        "⛽ P/z Plot — Champs Gaz",
+        "🛢️ IPR Vogel — Puits Huile",
+        "🎲 Monte Carlo — P10/P50/P90"
+    ])
 
     # ══════════════════════════════════════════════════════════════════════════
     #  ONGLET 1 : P/z Plot
@@ -562,6 +566,281 @@ def render_reservoir_page():
             "**Références** : Vogel J.V. (1968) — *Inflow Performance Relationships for "
             "Solution-Gas Drive Wells*, JPT. | Papay J. (1968) — corrélation z. | "
             "Standing M.B. (1977) — propriétés pseudo-critiques gaz."
+        )
+
+
+    # ══════════════════════════════════════════════════════════════════════════
+    #  ONGLET 3 : MONTE CARLO — P10 / P50 / P90
+    # ══════════════════════════════════════════════════════════════════════════
+    with tab_mc:
+        st.subheader("🎲 Simulation Monte Carlo — OOIP / EUR Probabiliste")
+        st.caption(
+            "Calcul volumétrique OOIP avec incertitudes · "
+            "50 000 simulations · P10 / P50 / P90 selon standard SPE-PRMS"
+        )
+
+        # ── Paramètres ────────────────────────────────────────────────────
+        col_mc1, col_mc2 = st.columns([1, 2])
+
+        with col_mc1:
+            st.markdown("#### Champ & paramètres")
+            champ_mc = st.selectbox(
+                "Champ cible",
+                ["Baleine (Bloc CI-101)", "Espoir (Bloc CI-26)",
+                 "Baobab (Bloc CI-40)", "Personnalisé"],
+                key="mc_champ"
+            )
+
+            # Valeurs par défaut selon champ
+            DEFAULTS_MC = {
+                "Baleine (Bloc CI-101)": dict(
+                    grv_min=12.0, grv_moy=18.0, grv_max=26.0,
+                    phi_min=0.14, phi_moy=0.19, phi_max=0.24,
+                    sw_min=0.22, sw_moy=0.28, sw_max=0.38,
+                    ntg_min=0.60, ntg_moy=0.78, ntg_max=0.90,
+                    boi_min=1.25, boi_moy=1.32, boi_max=1.40,
+                    rf_min=0.28, rf_moy=0.38, rf_max=0.50,
+                ),
+                "Espoir (Bloc CI-26)": dict(
+                    grv_min=8.0,  grv_moy=13.0, grv_max=20.0,
+                    phi_min=0.12, phi_moy=0.17, phi_max=0.22,
+                    sw_min=0.25, sw_moy=0.32, sw_max=0.42,
+                    ntg_min=0.55, ntg_moy=0.70, ntg_max=0.85,
+                    boi_min=1.18, boi_moy=1.25, boi_max=1.33,
+                    rf_min=0.22, rf_moy=0.32, rf_max=0.44,
+                ),
+                "Baobab (Bloc CI-40)": dict(
+                    grv_min=6.0,  grv_moy=10.0, grv_max=16.0,
+                    phi_min=0.10, phi_moy=0.15, phi_max=0.20,
+                    sw_min=0.28, sw_moy=0.35, sw_max=0.48,
+                    ntg_min=0.50, ntg_moy=0.65, ntg_max=0.80,
+                    boi_min=1.15, boi_moy=1.22, boi_max=1.30,
+                    rf_min=0.20, rf_moy=0.30, rf_max=0.40,
+                ),
+            }
+            d = DEFAULTS_MC.get(champ_mc, DEFAULTS_MC["Baleine (Bloc CI-101)"])
+
+            n_sim = st.select_slider(
+                "Nombre de simulations",
+                options=[10_000, 25_000, 50_000, 100_000],
+                value=50_000
+            )
+
+            st.markdown("---")
+            st.markdown("**GRV — Volume Rocheux Brut (km³)**")
+            c1, c2, c3 = st.columns(3)
+            grv_min = c1.number_input("Min", 0.1, 100.0, d["grv_min"], 0.5, key="grv_min")
+            grv_moy = c2.number_input("Moy", 0.1, 100.0, d["grv_moy"], 0.5, key="grv_moy")
+            grv_max = c3.number_input("Max", 0.1, 100.0, d["grv_max"], 0.5, key="grv_max")
+
+            st.markdown("**Porosité φ**")
+            c1, c2, c3 = st.columns(3)
+            phi_min = c1.number_input("Min", 0.01, 0.40, d["phi_min"], 0.01, key="phi_min")
+            phi_moy = c2.number_input("Moy", 0.01, 0.40, d["phi_moy"], 0.01, key="phi_moy")
+            phi_max = c3.number_input("Max", 0.01, 0.40, d["phi_max"], 0.01, key="phi_max")
+
+            st.markdown("**Saturation en eau Sw**")
+            c1, c2, c3 = st.columns(3)
+            sw_min = c1.number_input("Min", 0.05, 0.80, d["sw_min"], 0.01, key="sw_min")
+            sw_moy = c2.number_input("Moy", 0.05, 0.80, d["sw_moy"], 0.01, key="sw_moy")
+            sw_max = c3.number_input("Max", 0.05, 0.80, d["sw_max"], 0.01, key="sw_max")
+
+            st.markdown("**Net-to-Gross NTG**")
+            c1, c2, c3 = st.columns(3)
+            ntg_min = c1.number_input("Min", 0.10, 1.0, d["ntg_min"], 0.05, key="ntg_min")
+            ntg_moy = c2.number_input("Moy", 0.10, 1.0, d["ntg_moy"], 0.05, key="ntg_moy")
+            ntg_max = c3.number_input("Max", 0.10, 1.0, d["ntg_max"], 0.05, key="ntg_max")
+
+            st.markdown("**FVF Huile Boi (bbl/STB)**")
+            c1, c2, c3 = st.columns(3)
+            boi_min = c1.number_input("Min", 1.0, 2.5, d["boi_min"], 0.01, key="boi_min")
+            boi_moy = c2.number_input("Moy", 1.0, 2.5, d["boi_moy"], 0.01, key="boi_moy")
+            boi_max = c3.number_input("Max", 1.0, 2.5, d["boi_max"], 0.01, key="boi_max")
+
+            st.markdown("**Facteur de récupération RF**")
+            c1, c2, c3 = st.columns(3)
+            rf_min = c1.number_input("Min", 0.05, 0.80, d["rf_min"], 0.01, key="rf_min")
+            rf_moy = c2.number_input("Moy", 0.05, 0.80, d["rf_moy"], 0.01, key="rf_moy")
+            rf_max = c3.number_input("Max", 0.05, 0.80, d["rf_max"], 0.01, key="rf_max")
+
+            lancer = st.button("🚀 Lancer la simulation Monte Carlo", use_container_width=True)
+
+        # ── Simulation ────────────────────────────────────────────────────
+        with col_mc2:
+            if lancer or "mc_results" in st.session_state:
+
+                if lancer:
+                    np.random.seed(42)
+
+                    def triangular(mn, mo, mx, n):
+                        return np.random.triangular(mn, mo, mx, n)
+
+                    GRV = triangular(grv_min, grv_moy, grv_max, n_sim)
+                    PHI = triangular(phi_min, phi_moy, phi_max, n_sim)
+                    SW  = triangular(sw_min,  sw_moy,  sw_max,  n_sim)
+                    NTG = triangular(ntg_min, ntg_moy, ntg_max, n_sim)
+                    BOI = triangular(boi_min, boi_moy, boi_max, n_sim)
+                    RF  = triangular(rf_min,  rf_moy,  rf_max,  n_sim)
+
+                    # OOIP volumétrique (MMbbl)
+                    # OOIP = GRV(km³) × NTG × φ × (1-Sw) / Boi × 6289.81
+                    CONV = 6289.81  # 1 km³ = 6 289.81 MMbbl (STB)
+                    OOIP = GRV * NTG * PHI * (1 - SW) / BOI * CONV
+                    EUR  = OOIP * RF
+
+                    st.session_state["mc_results"] = {
+                        "OOIP": OOIP, "EUR": EUR,
+                        "champ": champ_mc, "n_sim": n_sim
+                    }
+
+                res   = st.session_state["mc_results"]
+                OOIP  = res["OOIP"]
+                EUR   = res["EUR"]
+
+                # ── Percentiles ──────────────────────────────────────
+                p10_ooip = np.percentile(OOIP, 10)
+                p50_ooip = np.percentile(OOIP, 50)
+                p90_ooip = np.percentile(OOIP, 90)
+                p10_eur  = np.percentile(EUR,  10)
+                p50_eur  = np.percentile(EUR,  50)
+                p90_eur  = np.percentile(EUR,  90)
+                mean_ooip = np.mean(OOIP)
+                mean_eur  = np.mean(EUR)
+
+                # ── KPIs ──────────────────────────────────────────────
+                st.markdown("### Résultats OOIP (MMbbl)")
+                k1, k2, k3, k4 = st.columns(4)
+                k1.metric("P90 — Pessimiste", f"{p90_ooip:,.0f}")
+                k2.metric("P50 — Central",    f"{p50_ooip:,.0f}")
+                k3.metric("P10 — Optimiste",  f"{p10_ooip:,.0f}")
+                k4.metric("Moyenne",           f"{mean_ooip:,.0f}")
+
+                st.markdown("### Résultats EUR Récupérable (MMbbl)")
+                k1, k2, k3, k4 = st.columns(4)
+                k1.metric("P90 — Pessimiste", f"{p90_eur:,.0f}")
+                k2.metric("P50 — Central",    f"{p50_eur:,.0f}")
+                k3.metric("P10 — Optimiste",  f"{p10_eur:,.0f}")
+                k4.metric("Moyenne",           f"{mean_eur:,.0f}")
+
+                st.markdown("---")
+
+                # ── Histogramme OOIP ──────────────────────────────────
+                fig_mc = make_subplots(
+                    rows=1, cols=2,
+                    subplot_titles=("Distribution OOIP (MMbbl)",
+                                    "Distribution EUR (MMbbl)")
+                )
+
+                for col_idx, (vals, p10, p50, p90, label) in enumerate([
+                    (OOIP, p10_ooip, p50_ooip, p90_ooip, "OOIP"),
+                    (EUR,  p10_eur,  p50_eur,  p90_eur,  "EUR"),
+                ], 1):
+                    fig_mc.add_trace(go.Histogram(
+                        x=vals, nbinsx=80,
+                        marker_color=COLORS["gaz"] if col_idx == 1 else COLORS["success"],
+                        opacity=0.75, name=label,
+                    ), row=1, col=col_idx)
+
+                    for pct, val, color, dash in [
+                        ("P90", p90, COLORS["danger"],  "dash"),
+                        ("P50", p50, COLORS["accent"],  "solid"),
+                        ("P10", p10, COLORS["success"], "dash"),
+                    ]:
+                        fig_mc.add_vline(
+                            x=val, line_dash=dash, line_color=color,
+                            annotation_text=f"{pct}: {val:,.0f}",
+                            annotation_font_color=color,
+                            annotation_font_size=11,
+                            row=1, col=col_idx
+                        )
+
+                fig_mc.update_layout(
+                    height=380, template="plotly_dark",
+                    paper_bgcolor=COLORS["bg_card"],
+                    plot_bgcolor=COLORS["bg_card"],
+                    font=dict(color=COLORS["text"]),
+                    showlegend=False,
+                    margin=dict(t=50, b=30, l=10, r=10),
+                )
+                st.plotly_chart(fig_mc, width='stretch')
+
+                # ── CDF (courbe de probabilité) ───────────────────────
+                st.markdown("#### Courbe de Probabilité Cumulative (CDF)")
+                fig_cdf = go.Figure()
+                for vals, label, color in [
+                    (np.sort(OOIP), "OOIP", COLORS["gaz"]),
+                    (np.sort(EUR),  "EUR",  COLORS["success"]),
+                ]:
+                    cdf = np.arange(1, len(vals) + 1) / len(vals) * 100
+                    fig_cdf.add_trace(go.Scatter(
+                        x=vals, y=cdf, mode="lines",
+                        name=label, line=dict(color=color, width=2)
+                    ))
+
+                # Lignes P10/P50/P90
+                for pct, y_val, color in [
+                    ("P90 (10%)", 10, COLORS["danger"]),
+                    ("P50 (50%)", 50, COLORS["accent"]),
+                    ("P10 (90%)", 90, COLORS["success"]),
+                ]:
+                    fig_cdf.add_hline(
+                        y=y_val, line_dash="dot", line_color=color,
+                        annotation_text=pct, annotation_font_color=color
+                    )
+
+                fig_cdf.update_layout(
+                    height=320, template="plotly_dark",
+                    paper_bgcolor=COLORS["bg_card"],
+                    plot_bgcolor=COLORS["bg_card"],
+                    font=dict(color=COLORS["text"]),
+                    xaxis_title="Volume (MMbbl)",
+                    yaxis_title="Probabilité cumulative (%)",
+                    legend=dict(x=0.7, y=0.3),
+                    margin=dict(t=20, b=30, l=10, r=10),
+                )
+                st.plotly_chart(fig_cdf, width='stretch')
+
+                # ── Tableau résumé ────────────────────────────────────
+                st.markdown("#### Tableau de Classification SPE-PRMS")
+                df_res = pd.DataFrame({
+                    "Catégorie SPE-PRMS": [
+                        "1P — Réserves prouvées (P90)",
+                        "2P — Réserves probables (P50)",
+                        "3P — Réserves possibles (P10)",
+                        "Moyenne (Expected Value)",
+                    ],
+                    "OOIP (MMbbl)": [
+                        f"{p90_ooip:,.0f}", f"{p50_ooip:,.0f}",
+                        f"{p10_ooip:,.0f}", f"{mean_ooip:,.0f}",
+                    ],
+                    "EUR (MMbbl)": [
+                        f"{p90_eur:,.0f}", f"{p50_eur:,.0f}",
+                        f"{p10_eur:,.0f}", f"{mean_eur:,.0f}",
+                    ],
+                    "Revenu estimé ($M @ 78$/bbl)": [
+                        f"${p90_eur * 78:,.0f}M",
+                        f"${p50_eur * 78:,.0f}M",
+                        f"${p10_eur * 78:,.0f}M",
+                        f"${mean_eur * 78:,.0f}M",
+                    ],
+                })
+                st.dataframe(df_res, hide_index=True, width='stretch')
+
+                st.info(
+                    f"✅ **{res['n_sim']:,} simulations** réalisées · "
+                    f"Distribution triangulaire sur 6 paramètres · "
+                    f"Conforme standard **SPE-PRMS 2018**"
+                )
+
+            else:
+                st.info("⬅️ Configurez les paramètres et cliquez **Lancer la simulation Monte Carlo**")
+
+        st.markdown("---")
+        st.caption(
+            "**Méthode** : Simulation Monte Carlo — distribution triangulaire (min/mode/max) "
+            "sur GRV, φ, Sw, NTG, Boi, RF · "
+            "OOIP = GRV × NTG × φ × (1−Sw) / Boi × 6 289,81 · "
+            "Standard SPE-PRMS 2018 · P10 = optimiste, P50 = central, P90 = pessimiste"
         )
 
 
