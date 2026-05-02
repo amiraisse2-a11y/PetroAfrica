@@ -126,17 +126,7 @@ def afficher_page_login():
             st.error("Email ou mot de passe incorrect.")
             return False
 
-    # Compte demo
-    st.markdown("---")
-    st.markdown("""
-    <div style="background:#FFF8F0;border-radius:8px;
-                padding:12px 16px;font-size:0.82rem;color:#888;">
-        <b>Comptes de demonstration :</b><br>
-        admin@petroci.ci / petroci2026 (Acces complet)<br>
-        eni@baleine.ci / baleine2026 (Champ Baleine)<br>
-        demo@petroci.ci / demo2026 (Vue limitee)
-    </div>
-    """, unsafe_allow_html=True)
+
     return False
 
 def verifier_session():
